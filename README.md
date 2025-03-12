@@ -29,3 +29,20 @@ To get started with the AI Slack Bot, follow these steps:
 3. **Integrate the AI Engine with Slack**: Integrate the AI engine with Slack using the Slack API and webhooks to enable communication between the AI engine and the Slack workspace.
 
 4. **Deploy the AI Slack Bot**: Deploy the AI Slack Bot to a server or cloud platform to ensure it is accessible and available to users in the Slack workspace.
+
+## Local Development
+
+Use the [Vercel CLI](https://vercel.com/docs/cli) and [untun](https://github.com/unjs/untun) to test out this project locally:
+
+```sh
+pnpm i -g vercel
+vercel dev --listen 3000 --yes
+```
+
+```sh
+npx untun@latest tunnel http://localhost:3000
+```
+
+Make sure to modify the [subscription URL](./README.md/#enable-slack-events) to the `untun` URL.
+
+> Note: you may encounter issues locally with `waitUntil`. This is being investigated.
