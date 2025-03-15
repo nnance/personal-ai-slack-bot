@@ -1,15 +1,19 @@
-import { WebClient, type SlackEvent } from "@slack/web-api";
+import { type SlackEvent } from "@slack/web-api";
+import { getBotId, sendMessage } from "./slack";
+import { waitUntil } from "@vercel/functions";
+import { generateResponse } from "./ai";
 
-const client = new WebClient(process.env.SLACK_BOT_TOKEN);
+const removeBotMention = (botUserId: string) => async (text: string) =>
+  text.includes(`<@${botUserId}>`)
+    ? text.split(`<@${botUserId}>`)[1].trim()
+    : text;
 
-const getBotId = async () => {
-  const { user_id: botUserId } = await client.auth.test();
+const convertToSlackMarkdown = (text: string) =>
+  text.replace(/\[(.*?)\]\((.*?)\)/g, "<$2|$1>").replace(/\*\*/g, "*");
 
-  if (!botUserId) {
-    throw new Error("botUserId is undefined");
-  }
-  return botUserId;
-};
+const postMessage =
+  (channel: string, thread_ts: string | undefined) => async (text: string) =>
+    sendMessage(text, channel, thread_ts);
 
 export async function POST(request: Request) {
   const rawBody = await request.text();
@@ -42,7 +46,18 @@ export async function POST(request: Request) {
       !event.bot_profile &&
       event.bot_id !== botUserId
     ) {
-      console.log("message");
+      const { channel, thread_ts, text } = event;
+
+      if (!text) {
+        return new Response("Success!", { status: 200 });
+      }
+
+      waitUntil(
+        removeBotMention(botUserId)(text)
+          .then(generateResponse)
+          .then(convertToSlackMarkdown)
+          .then(postMessage(channel, thread_ts))
+      );
     }
 
     return new Response("Success!", { status: 200 });
