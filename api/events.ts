@@ -1,19 +1,89 @@
-import { type SlackEvent } from "@slack/web-api";
-import { getBotId, sendMessage } from "./slack";
+import {
+  AppMentionEvent,
+  AssistantThreadStartedEvent,
+  GenericMessageEvent,
+  type SlackEvent,
+} from "@slack/web-api";
+import {
+  client,
+  convertToSlackMarkdown,
+  getBotId,
+  getHistory,
+  getThread,
+  removeAllBotMentions,
+  removeBotMention,
+  sendMessage,
+} from "./slack";
 import { waitUntil } from "@vercel/functions";
-import { generateResponse } from "./ai";
+import { generateChatResponse, generateResponse } from "./ai";
+import { slackToCoreMessage } from "./adapters";
 
-const removeBotMention = (botUserId: string) => async (text: string) =>
-  text.includes(`<@${botUserId}>`)
-    ? text.split(`<@${botUserId}>`)[1].trim()
-    : text;
+async function handleNewAppMention(event: AppMentionEvent, botUserId: string) {
+  console.log("Handling app mention");
+  if (event.bot_id || event.bot_id === botUserId || event.bot_profile) {
+    console.log("Skipping app mention");
+    return;
+  }
 
-const convertToSlackMarkdown = (text: string) =>
-  text.replace(/\[(.*?)\]\((.*?)\)/g, "<$2|$1>").replace(/\*\*/g, "*");
+  const { thread_ts, channel } = event;
 
-const postMessage =
-  (channel: string, thread_ts: string | undefined) => async (text: string) =>
-    sendMessage(text, channel, thread_ts);
+  const messages = !!thread_ts
+    ? await getThread(channel, thread_ts).then((thread) => thread.messages!)
+    : await getHistory(channel).then((history) => history.messages!);
+
+  const stripped = removeAllBotMentions(botUserId, messages);
+  const chatMessages = slackToCoreMessage(botUserId, stripped);
+  const response = await generateChatResponse(chatMessages, event.text);
+  const markdown = convertToSlackMarkdown(response);
+  return sendMessage(markdown, channel, thread_ts);
+}
+
+async function assistantThreadMessage(event: AssistantThreadStartedEvent) {
+  const { channel_id, thread_ts } = event.assistant_thread;
+  console.log(`Thread started: ${channel_id} ${thread_ts}`);
+
+  await sendMessage("Hello, How can I help you today?", channel_id, thread_ts);
+
+  await client.assistant.threads.setSuggestedPrompts({
+    channel_id: channel_id,
+    thread_ts: thread_ts,
+    prompts: [
+      {
+        title: "Get the weather",
+        message: "What is the current weather in London?",
+      },
+      {
+        title: "Get the news",
+        message: "What is the latest Premier League news from the BBC?",
+      },
+    ],
+  });
+}
+
+async function handleNewAssistantMessage(
+  event: GenericMessageEvent,
+  botUserId: string
+) {
+  if (
+    event.bot_id ||
+    event.bot_id === botUserId ||
+    event.bot_profile ||
+    !event.thread_ts
+  )
+    return;
+
+  const { channel, thread_ts, text } = event;
+  console.log(`New Assistant Message: ${channel} ${thread_ts}`);
+
+  if (!text) {
+    return new Response("Success!", { status: 200 });
+  }
+
+  const message = removeBotMention(botUserId, text);
+  const response = await generateResponse(message);
+  const markdown = convertToSlackMarkdown(response);
+  return sendMessage(markdown, channel, thread_ts);
+}
 
 export async function POST(request: Request) {
   const rawBody = await request.text();
@@ -31,11 +101,11 @@ export async function POST(request: Request) {
     const event = payload.event as SlackEvent;
 
     if (event.type === "app_mention") {
-      console.log("app mention");
+      waitUntil(handleNewAppMention(event, botUserId));
     }
 
     if (event.type === "assistant_thread_started") {
-      console.log("assistant thread started");
+      waitUntil(assistantThreadMessage(event));
     }
 
     if (
@@ -46,18 +116,7 @@ export async function POST(request: Request) {
       !event.bot_profile &&
       event.bot_id !== botUserId
     ) {
-      const { channel, thread_ts, text } = event;
-
-      if (!text) {
-        return new Response("Success!", { status: 200 });
-      }
-
-      waitUntil(
-        removeBotMention(botUserId)(text)
-          .then(generateResponse)
-          .then(convertToSlackMarkdown)
-          .then(postMessage(channel, thread_ts))
-      );
+      waitUntil(handleNewAssistantMessage(event, botUserId));
     }
 
     return new Response("Success!", { status: 200 });
