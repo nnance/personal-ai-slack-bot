@@ -5,12 +5,12 @@ import {
   type SlackEvent,
 } from "@slack/web-api";
 import { waitUntil } from "@vercel/functions";
-import { generateResponse } from "./ai";
+import { SlackAgent } from "./ai";
 import { slackToCoreMessage } from "./adapters";
 import { SlackClient } from "./slack";
 
 export const eventHandler =
-  (client: SlackClient) => async (request: Request) => {
+  (client: SlackClient, agent: SlackAgent) => async (request: Request) => {
     const {
       getBotId,
       getAssistant,
@@ -21,6 +21,8 @@ export const eventHandler =
       sendMessage,
       convertToSlackMarkdown,
     } = client;
+
+    const { generateResponse } = agent;
 
     async function handleNewAppMention(
       event: AppMentionEvent,
