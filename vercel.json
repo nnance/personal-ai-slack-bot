@@ -1,7 +1,10 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "functions": {
-    "api/events.ts": {
+    "api/chat.ts": {
+      "maxDuration": 60
+    },
+    "api/search.ts": {
       "maxDuration": 60
     }
   },
