@@ -47,6 +47,15 @@ Make sure to modify the [subscription URL](./README.md/#enable-slack-events) to 
 
 > Note: you may encounter issues locally with `waitUntil`. This is being investigated.
 
+## Agents
+
+There are several AI agents available within Slack:
+
+- [ ] Assistant - The main AI assistant that should be present in every workspace and thread. It will primarily be responsible for managing other agents and handling user requests.
+- [ ] Scheduler - An agent that can schedule events, reminders, and tasks for users.
+- [ ] Translator - An agent that can translate messages between different languages.
+- [ ] Researcher - An agent that can search for information, articles, and resources on the web as well as perform deep research and return summarized content.
+
 ## Adding Agent to Slack
 
 To add the agent to your Slack workspace, follow these steps:
