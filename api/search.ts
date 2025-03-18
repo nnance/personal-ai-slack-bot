@@ -12,16 +12,12 @@ export function createSearchAgent() {
   return createSlackAgent({ model, system });
 }
 
-let requestHandler: ReturnType<typeof eventHandler>;
+const slack = createSlackClient(process.env.SEARCH_AGENT_TOKEN);
 
 export async function POST(request: Request) {
   console.log("Search request received");
 
-  // create and cache the request handler on the first request
-  if (!requestHandler) {
-    const slack = createSlackClient(process.env.SEARCH_AGENT_TOKEN);
-    const agent = createSearchAgent();
-    requestHandler = eventHandler(slack, agent);
-  }
-  return requestHandler(request);
+  const agent = createSearchAgent();
+  const payload = await request.text().then(JSON.parse);
+  return eventHandler(slack, agent, payload);
 }
