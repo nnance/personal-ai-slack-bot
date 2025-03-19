@@ -17,6 +17,9 @@ export function createAssistantAgent({
   availableAgents,
   existingAgents,
 }: AssistantAgentProps) {
+  const name = "Assistant";
+  const description = "A Slack bot assistant to help users in a Slack channel";
+  const handle = "@assistant";
   const model = openai("gpt-4o");
   const system = `
   You are a Slack bot assistant Keep your responses concise and to the point.  You role is to assist users in a Slack channel.
@@ -39,5 +42,5 @@ export function createAssistantAgent({
     sendMessage: createSendMessage(channel),
   });
 
-  return createSlackAgent({ model, system, tools });
+  return createSlackAgent({ name, description, handle, model, system, tools });
 }
