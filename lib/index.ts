@@ -1,4 +1,4 @@
 export { eventHandler } from "./handlers";
 export { createSlackClient } from "./slack";
-export { createSlackAgent, SlackAgent } from "./ai";
+export { createSlackAgent, createAgentRegistry, SlackAgent } from "./ai";
 export { createInviteToChannel, createSendMessage } from "./tools";

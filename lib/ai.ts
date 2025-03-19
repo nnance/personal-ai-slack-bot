@@ -1,4 +1,5 @@
 import { CoreMessage, generateText, LanguageModelV1, tool, ToolSet } from "ai";
+import { get } from "http";
 
 // TODO: implement an agent registry to allow for multiple agents
 // TODO: provide a method to retrieve a bullet list of available agents
@@ -21,8 +22,10 @@ export interface GenerateResponseProps {
   thread?: string;
 }
 
-export function createSlackAgent({ model, system, tools }: SlackAgentProps) {
+export function createSlackAgent(props: SlackAgentProps) {
+  const { model, system, tools } = props;
   return {
+    ...props,
     generateResponse: async ({
       channel,
       content,
@@ -42,5 +45,22 @@ export function createSlackAgent({ model, system, tools }: SlackAgentProps) {
       });
       return text;
     },
+  };
+}
+
+export function createAgentRegistry(defaults: SlackAgent[] = []) {
+  const agents = new Map<string, SlackAgent>(
+    defaults.map((agent) => [agent.name, agent])
+  );
+  return {
+    addAgent: (agent: SlackAgent) => agents.set(agent.name, agent),
+    getAgent: (name: string) => agents.get(name),
+    getAgentByHandle: (handle: string) =>
+      Array.from(agents.values()).find((agent) => agent.handle === handle),
+    getAgentList: () => Array.from(agents.values()),
+    getAvailableAgents: () =>
+      Array.from(agents.values()).map(
+        ({ name, handle, description }) => `${name}: ${handle} - ${description}`
+      ),
   };
 }
