@@ -85,8 +85,10 @@ describe("createAgentRegistry", () => {
     const availableAgents = registry.getAvailableAgents();
 
     expect(availableAgents).toContain(
-      "- @test-agent: A test agent for unit testing."
+      "Test Agent: @test-agent - A test agent for unit testing."
     );
-    expect(availableAgents).toContain("- @another-agent: Another test agent.");
+    expect(availableAgents).toContain(
+      "Another Agent: @another-agent - Another test agent."
+    );
   });
 });
