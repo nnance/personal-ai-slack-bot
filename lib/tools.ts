@@ -10,6 +10,7 @@ export const createInviteToChannel = (channel: string) =>
     }),
     execute: async ({ name }) => {
       console.log(`Invite: ${name} to ${channel}`);
+      return { success: true };
     },
   });
 
@@ -23,5 +24,6 @@ export const createSendMessage = (channel: string) =>
     }),
     execute: async ({ name, message }) => {
       console.log(`Send: ${message} to ${name} in ${channel}`);
+      return { success: true };
     },
   });
