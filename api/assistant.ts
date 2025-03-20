@@ -1,9 +1,8 @@
 import "dotenv/config";
 import { eventHandler, createSlackClient, createAgentRegistry } from "../lib";
-import { createAssistantAgent } from "../agents/assistant";
-import { createSearchAgent } from "./search";
+import { createAssistantAgent, createSearchAgent } from "../agents";
 
-const slack = createSlackClient(process.env.SLACK_BOT_TOKEN);
+const client = createSlackClient(process.env.SLACK_BOT_TOKEN);
 
 export async function POST(request: Request) {
   console.log("AI request received");
@@ -11,8 +10,9 @@ export async function POST(request: Request) {
   const registry = createAgentRegistry([createSearchAgent()]);
 
   const agent = createAssistantAgent({
+    client,
     availableAgents: registry.getAvailableAgents(),
   });
   const payload = await request.text().then(JSON.parse);
-  return eventHandler(slack, agent, payload);
+  return eventHandler(client, agent, payload);
 }

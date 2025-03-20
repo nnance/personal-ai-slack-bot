@@ -2,6 +2,8 @@ import "dotenv/config";
 import { ConversationsRepliesResponse, WebClient } from "@slack/web-api";
 import { MessageElement } from "@slack/web-api/dist/types/response/ConversationsHistoryResponse";
 
+// TODO: Method to get a list of existing agents in a channel
+
 export type SlackClient = ReturnType<typeof createSlackClient>;
 
 export function createSlackClient(slackToken?: string) {

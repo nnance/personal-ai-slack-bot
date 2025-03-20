@@ -4,9 +4,11 @@ import {
   createSlackAgent,
   createInviteToChannel,
   createSendMessage,
+  SlackClient,
 } from "../lib";
 
 interface AssistantAgentProps {
+  client: SlackClient;
   availableAgents: string[];
   existingAgents?: string[];
   channel?: string;
@@ -14,6 +16,7 @@ interface AssistantAgentProps {
 }
 
 export function createAssistantAgent({
+  client,
   availableAgents,
   existingAgents,
 }: AssistantAgentProps) {
@@ -39,7 +42,7 @@ export function createAssistantAgent({
   `;
   const tools = (channel: string, thread?: string) => ({
     inviteToChannel: createInviteToChannel(channel),
-    sendMessage: createSendMessage(channel),
+    sendMessage: createSendMessage(client, channel),
   });
 
   return createSlackAgent({ name, description, handle, model, system, tools });

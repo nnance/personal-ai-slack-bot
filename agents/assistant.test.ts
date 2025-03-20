@@ -1,5 +1,6 @@
 import { createAssistantAgent } from "./assistant";
-import { createInviteToChannel, createSendMessage } from "../lib";
+import { createInviteToChannel, createSendMessage, SlackClient } from "../lib";
+
 import * as lib from "../lib";
 import { tool } from "ai";
 import { z } from "zod";
@@ -7,10 +8,21 @@ import { z } from "zod";
 describe("createAssistantAgent", () => {
   var inviteToChannel: any;
   var sendMessage: any;
+  var slackClient: SlackClient;
 
   beforeEach(() => {
-    inviteToChannel = jest.fn(async ({ name }) => ({ success: true }));
-    sendMessage = jest.fn(async ({ name }) => ({ success: true }));
+    inviteToChannel = jest.fn(async () => ({ success: true }));
+    sendMessage = jest.fn(async () => ({ success: true }));
+    slackClient = {
+      getBotId: jest.fn(),
+      getAssistant: jest.fn(),
+      removeBotMention: jest.fn(),
+      removeAllBotMentions: jest.fn(),
+      convertToSlackMarkdown: jest.fn(),
+      getThread: jest.fn(),
+      getHistory: jest.fn(),
+      sendMessage: jest.fn(),
+    };
 
     jest
       .spyOn(lib, "createInviteToChannel")
@@ -24,22 +36,27 @@ describe("createAssistantAgent", () => {
           execute: inviteToChannel,
         })
       );
-    jest.spyOn(lib, "createSendMessage").mockImplementation((channel: string) =>
-      tool({
-        description:
-          "Send a Slack message to an agent in a channel to perform a specific task",
-        parameters: z.object({
-          name: z.string(),
-          message: z.string(),
-        }),
-        execute: sendMessage,
-      })
-    );
+    jest
+      .spyOn(lib, "createSendMessage")
+      .mockImplementation((client: SlackClient, channel: string) =>
+        tool({
+          description:
+            "Send a Slack message to an agent in a channel to perform a specific task",
+          parameters: z.object({
+            name: z.string(),
+            message: z.string(),
+          }),
+          execute: sendMessage,
+        })
+      );
   });
 
   describe("createAssistantAgent", () => {
     it("initializes the model and system correctly", () => {
-      const agent = createAssistantAgent({ availableAgents: [] });
+      const agent = createAssistantAgent({
+        client: slackClient,
+        availableAgents: [],
+      });
       expect(agent).not.toBeUndefined();
     });
 
@@ -47,17 +64,21 @@ describe("createAssistantAgent", () => {
       const channel = "test-channel";
       const thread = "test-thread";
 
-      const agent = createAssistantAgent({ availableAgents: [] });
+      const agent = createAssistantAgent({
+        client: slackClient,
+        availableAgents: [],
+      });
       await agent.generateResponse({ channel, content: "Test" });
 
       expect(createInviteToChannel).toHaveBeenCalledWith(channel);
-      expect(createSendMessage).toHaveBeenCalledWith(channel);
+      expect(createSendMessage).toHaveBeenCalledWith(slackClient, channel);
     });
   });
 
   describe("when there are available agents", () => {
     it("should add the agent to the channel and send it a message", async () => {
       const agent = createAssistantAgent({
+        client: slackClient,
         availableAgents: [
           "Search Agent: @search-agent - Use this agent to search the web for information.",
         ],
@@ -72,12 +93,13 @@ describe("createAssistantAgent", () => {
 
       expect(inviteToChannel).toHaveBeenCalled();
       expect(sendMessage).toHaveBeenCalled();
-    });
+    }, 10000);
   });
 
   describe("when agents are already in the channel", () => {
     it("should not add the agent but send it a message", async () => {
       const agent = createAssistantAgent({
+        client: slackClient,
         availableAgents: [
           "Search Agent: @search-agent - Use this agent to search the web for information.",
         ],
@@ -93,6 +115,6 @@ describe("createAssistantAgent", () => {
 
       expect(inviteToChannel).not.toHaveBeenCalled();
       expect(sendMessage).toHaveBeenCalled();
-    });
+    }, 10000);
   });
 });

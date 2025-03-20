@@ -1,5 +1,9 @@
 import { tool } from "ai";
 import { z } from "zod";
+import Exa from "exa-js";
+import { SlackClient } from "./slack";
+
+export const exa = new Exa(process.env.EXA_API_KEY);
 
 export const createInviteToChannel = (channel: string) =>
   tool({
@@ -14,7 +18,7 @@ export const createInviteToChannel = (channel: string) =>
     },
   });
 
-export const createSendMessage = (channel: string) =>
+export const createSendMessage = (client: SlackClient, channel: string) =>
   tool({
     description:
       "Send a Slack message to an agent in a channel to perform a specific task",
@@ -22,8 +26,37 @@ export const createSendMessage = (channel: string) =>
       name: z.string(),
       message: z.string(),
     }),
-    execute: async ({ name, message }) => {
-      console.log(`Send: ${message} to ${name} in ${channel}`);
+    execute: async ({ message }) => {
+      client.sendMessage(channel, message);
       return { success: true };
+    },
+  });
+
+export const searchWeb = () =>
+  tool({
+    description: "Use this to search the web for information",
+    parameters: z.object({
+      query: z.string(),
+      specificDomain: z
+        .string()
+        .nullable()
+        .describe(
+          "a domain to search if the user specifies e.g. bbc.com. Should be only the domain name without the protocol"
+        ),
+    }),
+    execute: async ({ query, specificDomain }) => {
+      const { results } = await exa.searchAndContents(query, {
+        livecrawl: "always",
+        numResults: 3,
+        includeDomains: specificDomain ? [specificDomain] : undefined,
+      });
+
+      return {
+        results: results.map((result) => ({
+          title: result.title,
+          url: result.url,
+          snippet: result.text.slice(0, 1000),
+        })),
+      };
     },
   });

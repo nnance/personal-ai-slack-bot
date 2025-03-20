@@ -1,9 +1,7 @@
 import { CoreMessage, generateText, LanguageModelV1, tool, ToolSet } from "ai";
-import { get } from "http";
 
-// TODO: implement an agent registry to allow for multiple agents
-// TODO: provide a method to retrieve a bullet list of available agents
 // TODO: provide a way to switch between agents
+
 export interface SlackAgentProps {
   name: string;
   description: string;
