@@ -1,7 +1,7 @@
 import { createAssistantAgent } from "./assistant";
-import { createInviteToChannel, createSendMessage, SlackClient } from "../lib";
+import { SlackClient } from "../lib";
 
-import * as lib from "../lib";
+import * as tools from "./tools";
 import { tool } from "ai";
 import { z } from "zod";
 
@@ -25,7 +25,7 @@ describe("createAssistantAgent", () => {
     };
 
     jest
-      .spyOn(lib, "createInviteToChannel")
+      .spyOn(tools, "createInviteToChannel")
       .mockImplementation((channel: string) =>
         tool({
           description:
@@ -37,7 +37,7 @@ describe("createAssistantAgent", () => {
         })
       );
     jest
-      .spyOn(lib, "createSendMessage")
+      .spyOn(tools, "createSendMessage")
       .mockImplementation((client: SlackClient, channel: string) =>
         tool({
           description:
@@ -70,8 +70,11 @@ describe("createAssistantAgent", () => {
       });
       await agent.generateResponse({ channel, content: "Test" });
 
-      expect(createInviteToChannel).toHaveBeenCalledWith(channel);
-      expect(createSendMessage).toHaveBeenCalledWith(slackClient, channel);
+      expect(tools.createInviteToChannel).toHaveBeenCalledWith(channel);
+      expect(tools.createSendMessage).toHaveBeenCalledWith(
+        slackClient,
+        channel
+      );
     });
   });
 

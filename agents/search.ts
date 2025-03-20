@@ -1,5 +1,6 @@
 import { openai } from "@ai-sdk/openai";
-import { createSlackAgent, searchWeb } from "../lib";
+import { createSlackAgent } from "../lib";
+import { searchWeb } from "./tools";
 
 export function createSearchAgent() {
   const name = "Search Agent";
