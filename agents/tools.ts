@@ -5,7 +5,7 @@ import { SlackClient } from "../lib/slack";
 
 export const exa = new Exa(process.env.EXA_API_KEY);
 
-export const createInviteToChannel = (channel: string) =>
+export const createInviteToChannel = (client: SlackClient, channel: string) =>
   tool({
     description:
       "Invite a Slack bot agent to a channel to help with a specific task",
@@ -13,7 +13,8 @@ export const createInviteToChannel = (channel: string) =>
       name: z.string(),
     }),
     execute: async ({ name }) => {
-      console.log(`Invite: ${name} to ${channel}`);
+      console.log(`Invite: ${channel} to ${name}`);
+      client.inviteToChannel(name, channel);
       return { success: true };
     },
   });
@@ -26,8 +27,10 @@ export const createSendMessage = (client: SlackClient, channel: string) =>
       name: z.string(),
       message: z.string(),
     }),
-    execute: async ({ message }) => {
-      client.sendMessage(channel, message);
+    execute: async ({ name, message }) => {
+      console.log(`Send message: ${message} to ${name} in ${channel}`);
+      const mention = name.startsWith("@") ? name : `@${name}`;
+      client.sendMessage(`${mention} ${message}`, channel);
       return { success: true };
     },
   });
@@ -45,8 +48,10 @@ export const searchWeb = () =>
         ),
     }),
     execute: async ({ query, specificDomain }) => {
+      console.log(`Searching for: ${query}`);
       const { results } = await exa.searchAndContents(query, {
-        livecrawl: "always",
+        livecrawl: "auto",
+        livecrawlTimeout: 5000,
         numResults: 3,
         includeDomains: specificDomain ? [specificDomain] : undefined,
       });

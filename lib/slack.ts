@@ -2,8 +2,6 @@ import "dotenv/config";
 import { ConversationsRepliesResponse, WebClient } from "@slack/web-api";
 import { MessageElement } from "@slack/web-api/dist/types/response/ConversationsHistoryResponse";
 
-// TODO: Method to get a list of existing agents in a channel
-
 export type SlackClient = ReturnType<typeof createSlackClient>;
 
 export function createSlackClient(slackToken?: string) {
@@ -87,6 +85,37 @@ export function createSlackClient(slackToken?: string) {
     });
   }
 
+  async function inviteToChannel(user: string, channel: string) {
+    return client.conversations.invite({
+      channel: channel,
+      users: user,
+    });
+  }
+
+  async function getAgentsInChannel(channel: string) {
+    const membersResponse = await client.conversations.members({
+      channel: channel,
+    });
+
+    if (!membersResponse.members) {
+      throw new Error("No members found in the channel");
+    }
+
+    const members = membersResponse.members.map(async (member) =>
+      client.users.info({ user: member })
+    );
+
+    return (await Promise.all(members))
+      .map((member) => ({
+        id: member.user!.id,
+        team_id: member.user!.team_id,
+        name: member.user!.name,
+        real_name: member.user!.real_name,
+        bot_id: member.user!.is_bot ? member.user!.id : undefined,
+      }))
+      .filter((member) => !!member.bot_id);
+  }
+
   return {
     getBotId,
     getAssistant,
@@ -96,5 +125,7 @@ export function createSlackClient(slackToken?: string) {
     getThread,
     getHistory,
     sendMessage,
+    inviteToChannel,
+    getAgentsInChannel,
   };
 }

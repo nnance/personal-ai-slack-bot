@@ -22,11 +22,13 @@ describe("createAssistantAgent", () => {
       getThread: jest.fn(),
       getHistory: jest.fn(),
       sendMessage: jest.fn(),
+      inviteToChannel: jest.fn(),
+      getAgentsInChannel: jest.fn(),
     };
 
     jest
       .spyOn(tools, "createInviteToChannel")
-      .mockImplementation((channel: string) =>
+      .mockImplementation((client: SlackClient, channel: string) =>
         tool({
           description:
             "Invite a Slack bot agent to a channel to help with a specific task",
@@ -68,9 +70,13 @@ describe("createAssistantAgent", () => {
         client: slackClient,
         availableAgents: [],
       });
+
       await agent.generateResponse({ channel, content: "Test" });
 
-      expect(tools.createInviteToChannel).toHaveBeenCalledWith(channel);
+      expect(tools.createInviteToChannel).toHaveBeenCalledWith(
+        slackClient,
+        channel
+      );
       expect(tools.createSendMessage).toHaveBeenCalledWith(
         slackClient,
         channel

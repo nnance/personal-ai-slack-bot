@@ -1,5 +1,5 @@
 import "dotenv/config";
-import { eventHandler, createSlackClient, createSlackAgent } from "../lib";
+import { eventHandler, createSlackClient } from "../lib";
 import { createSearchAgent } from "../agents";
 
 const slack = createSlackClient(process.env.SEARCH_AGENT_TOKEN);

@@ -1,19 +1,36 @@
+import "dotenv/config";
 import { openai } from "@ai-sdk/openai";
-import { createSlackAgent } from "../lib";
+import { SlackAgent, GenerateResponseProps } from "../lib";
 import { searchWeb } from "./tools";
+import { generateText } from "ai";
 
 export function createSearchAgent() {
-  const name = "Search Agent";
-  const description = "Use this agent to search the web for information.";
-  const handle = "@search-agent";
-  const model = openai("gpt-4o");
-  const system = `You are a Slack bot assistant Keep your responses concise and to the point.
-- Do not tag users.
-- Current date is: ${new Date().toISOString().split("T")[0]}
-- Make sure to ALWAYS include sources in your final response if you use web search. Put sources inline if possible.`;
+  const system = `
+  You are a Slack bot assistant Your role is to provide research and information to users in a Slack channel.
+  You should provide accurate and up-to-date information leveraging the web search tools available to you. 
 
-  const tools = {
-    searchWeb: searchWeb(),
+- Current date is: ${new Date().toISOString().split("T")[0]}
+- You should not repond to users directly, but perform the search  
+- Make sure to ALWAYS include sources in your final response if you use web search. Put sources inline if possible.
+`;
+
+  const agent: SlackAgent = {
+    name: "Search Agent",
+    description: "Use this agent to search the web for information.",
+    handle: "search-agent",
+    generateResponse: async (props: GenerateResponseProps) => {
+      const { content } = props;
+      const { text } = await generateText({
+        model: openai("gpt-4o"),
+        system,
+        prompt: content,
+        maxSteps: 10,
+        tools: {
+          searchWeb: searchWeb(),
+        },
+      });
+      return text;
+    },
   };
-  return createSlackAgent({ name, description, handle, model, system });
+  return agent;
 }

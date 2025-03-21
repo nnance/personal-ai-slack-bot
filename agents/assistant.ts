@@ -11,6 +11,8 @@ interface AssistantAgentProps {
   thread?: string;
 }
 
+// TODO: Implement Slack Agent interface with AI SDK
+
 export function createAssistantAgent({
   client,
   availableAgents,
@@ -18,15 +20,17 @@ export function createAssistantAgent({
 }: AssistantAgentProps) {
   const name = "Assistant";
   const description = "A Slack bot assistant to help users in a Slack channel";
-  const handle = "@assistant";
+  const handle = "AI";
   const model = openai("gpt-4o");
   const system = `
   You are a Slack bot assistant Keep your responses concise and to the point.  You role is to assist users in a Slack channel.
   Answer questions, provide information, and help users with their requests.  Respond directly when possible, but ask for clarification if needed.
   
+  - Do not tag users.
+
   If you need help from a Slack bot agent, use the following tools:
   - inviteToChannel: tool to invite them to the channel
-  - sendMessage: tool to send a message to the Slack bot agent
+  - sendMessage: tool to send a message to the Slack bot agent.  When using these tools, make sure to mention the bot and provide clear instructions
   
   Slack bot agents available to invite or direct:
   ${availableAgents.map((agent) => `- ${agent}`).join("\n")}
@@ -37,7 +41,7 @@ export function createAssistantAgent({
   - Current date is: ${new Date().toISOString().split("T")[0]}  
   `;
   const tools = (channel: string, thread?: string) => ({
-    inviteToChannel: createInviteToChannel(channel),
+    inviteToChannel: createInviteToChannel(client, channel),
     sendMessage: createSendMessage(client, channel),
   });
 

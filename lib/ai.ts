@@ -11,7 +11,13 @@ export interface SlackAgentProps {
   tools?: (channel: string, thread?: string) => ToolSet;
 }
 
-export type SlackAgent = ReturnType<typeof createSlackAgent>;
+export interface SlackAgent {
+  name: string;
+  description: string;
+  handle: string;
+  botId?: string;
+  generateResponse: (props: GenerateResponseProps) => Promise<string>;
+}
 
 export interface GenerateResponseProps {
   channel: string;
@@ -19,6 +25,8 @@ export interface GenerateResponseProps {
   messages?: CoreMessage[];
   thread?: string;
 }
+
+// TODO: Implement lightweight Slack Agent interface with AI SDK removing the need for SlackClient
 
 export function createSlackAgent(props: SlackAgentProps) {
   const { model, system, tools } = props;
@@ -45,6 +53,8 @@ export function createSlackAgent(props: SlackAgentProps) {
     },
   };
 }
+
+export type AgentRegistry = ReturnType<typeof createAgentRegistry>;
 
 export function createAgentRegistry(defaults: SlackAgent[] = []) {
   const agents = new Map<string, SlackAgent>(
