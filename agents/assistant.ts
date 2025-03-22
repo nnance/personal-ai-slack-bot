@@ -1,6 +1,6 @@
 import "dotenv/config";
 import { openai } from "@ai-sdk/openai";
-import { createSlackAgent, SlackAgent, SlackClient } from "../lib";
+import { SlackAgent, SlackClient } from "../lib";
 import { createInviteToChannel, createSendMessage } from "./tools";
 import { CoreMessage, generateText } from "ai";
 

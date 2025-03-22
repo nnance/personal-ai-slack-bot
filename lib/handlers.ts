@@ -5,7 +5,7 @@ import {
   type SlackEvent,
 } from "@slack/web-api";
 import { waitUntil } from "@vercel/functions";
-import { SlackAgent } from "./ai";
+import { SlackAgent } from "./registry";
 import { slackToCoreMessage } from "./adapters";
 import { SlackClient } from "./slack";
 

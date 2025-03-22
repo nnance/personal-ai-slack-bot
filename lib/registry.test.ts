@@ -1,21 +1,18 @@
-import { createAgentRegistry, createSlackAgent, SlackAgentProps } from "./ai";
+import { createAgentRegistry, SlackAgent } from "./registry";
 
 describe("createAgentRegistry", () => {
   let registry: ReturnType<typeof createAgentRegistry>;
-  let mockAgent: ReturnType<typeof createSlackAgent>;
+  let mockAgent: SlackAgent;
 
   beforeEach(() => {
     registry = createAgentRegistry();
 
-    const mockAgentProps: SlackAgentProps = {
+    mockAgent = {
       name: "Test Agent",
       description: "A test agent for unit testing.",
       handle: "@test-agent",
-      model: {} as any, // Mock model
-      system: "Test system",
+      generateResponse: async () => "Test response",
     };
-
-    mockAgent = createSlackAgent(mockAgentProps);
   });
 
   it("should add an agent to the registry", () => {
@@ -52,13 +49,12 @@ describe("createAgentRegistry", () => {
   });
 
   it("should return a list of all agents", () => {
-    const anotherAgent = createSlackAgent({
+    const anotherAgent: SlackAgent = {
       name: "Another Agent",
       description: "Another test agent.",
       handle: "@another-agent",
-      model: {} as any, // Mock model
-      system: "Another system",
-    });
+      generateResponse: async () => "Another test response",
+    };
 
     registry.addAgent(mockAgent);
     registry.addAgent(anotherAgent);
@@ -71,13 +67,12 @@ describe("createAgentRegistry", () => {
   });
 
   it("should return a formatted list of available agents", () => {
-    const anotherAgent = createSlackAgent({
+    const anotherAgent: SlackAgent = {
       name: "Another Agent",
       description: "Another test agent.",
       handle: "@another-agent",
-      model: {} as any, // Mock model
-      system: "Another system",
-    });
+      generateResponse: async () => "Another test response",
+    };
 
     registry.addAgent(mockAgent);
     registry.addAgent(anotherAgent);
