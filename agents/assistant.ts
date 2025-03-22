@@ -7,20 +7,12 @@ import { CoreMessage, generateText } from "ai";
 interface AssistantAgentProps {
   client: SlackClient;
   availableAgents: string[];
-  channel?: string;
-  thread?: string;
 }
 
-export function createAssistantAgent({
-  client,
-  availableAgents,
-}: AssistantAgentProps) {
-  const name = "Assistant";
-  const handle = "AI";
-  const createSystemPrompt = (
-    availableAgents: string[],
-    existingAgents?: string[]
-  ) => `
+const createSystemPrompt = (
+  availableAgents: string[],
+  existingAgents?: string[]
+) => `
   You are a Slack bot assistant Keep your responses concise and to the point.  You role is to assist users in a Slack channel.
   Answer questions, provide information, and help users with their requests.  Respond directly when possible, but ask for clarification if needed.
   
@@ -38,6 +30,13 @@ export function createAssistantAgent({
 
   - Current date is: ${new Date().toISOString().split("T")[0]}  
   `;
+
+export function createAssistantAgent({
+  client,
+  availableAgents,
+}: AssistantAgentProps) {
+  const name = "Assistant";
+  const handle = "AI";
 
   const agent: SlackAgent = {
     name,
