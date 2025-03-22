@@ -3,7 +3,13 @@ import { ConversationsRepliesResponse, WebClient } from "@slack/web-api";
 import { MessageElement } from "@slack/web-api/dist/types/response/ConversationsHistoryResponse";
 
 export type SlackClient = ReturnType<typeof createSlackClient>;
-
+export interface SlackBot {
+  id?: string;
+  team_id?: string;
+  name?: string;
+  real_name?: string;
+  bot_id?: string;
+}
 export function createSlackClient(slackToken?: string) {
   const client = new WebClient(slackToken);
 
@@ -92,7 +98,7 @@ export function createSlackClient(slackToken?: string) {
     });
   }
 
-  async function getAgentsInChannel(channel: string) {
+  async function getAgentsInChannel(channel: string): Promise<SlackBot[]> {
     const membersResponse = await client.conversations.members({
       channel: channel,
     });
@@ -106,14 +112,14 @@ export function createSlackClient(slackToken?: string) {
     );
 
     return (await Promise.all(members))
+      .filter((member) => member.user && member.user.is_bot)
       .map((member) => ({
         id: member.user!.id,
         team_id: member.user!.team_id,
         name: member.user!.name,
         real_name: member.user!.real_name,
         bot_id: member.user!.is_bot ? member.user!.id : undefined,
-      }))
-      .filter((member) => !!member.bot_id);
+      }));
   }
 
   return {

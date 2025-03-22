@@ -1,6 +1,6 @@
 import "dotenv/config";
 import { openai } from "@ai-sdk/openai";
-import { SlackAgent, GenerateResponseProps } from "../lib";
+import { SlackAgent } from "../lib";
 import { searchWeb } from "./tools";
 import { generateText } from "ai";
 
@@ -18,12 +18,11 @@ export function createSearchAgent() {
     name: "Search Agent",
     description: "Use this agent to search the web for information.",
     handle: "search-agent",
-    generateResponse: async (props: GenerateResponseProps) => {
-      const { content } = props;
+    generateResponse: async ({ content: prompt }) => {
       const { text } = await generateText({
         model: openai("gpt-4o"),
         system,
-        prompt: content,
+        prompt,
         maxSteps: 10,
         tools: {
           searchWeb: searchWeb(),

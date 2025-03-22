@@ -23,7 +23,7 @@ describe("createAssistantAgent", () => {
       getHistory: jest.fn(),
       sendMessage: jest.fn(),
       inviteToChannel: jest.fn(),
-      getAgentsInChannel: jest.fn(),
+      getAgentsInChannel: async () => [],
     };
 
     jest
@@ -98,7 +98,7 @@ describe("createAssistantAgent", () => {
           "We will be traveling to Portland, OR this week.   Are there any events happening related to art or food this week?",
       };
 
-      const response = await agent.generateResponse(mockInput);
+      await agent.generateResponse(mockInput);
 
       expect(inviteToChannel).toHaveBeenCalled();
       expect(sendMessage).toHaveBeenCalled();
@@ -112,15 +112,23 @@ describe("createAssistantAgent", () => {
         availableAgents: [
           "Search Agent: @search-agent - Use this agent to search the web for information.",
         ],
-        existingAgents: ["@search-agent"],
       });
+      // Mock an agent already in the channel
+      slackClient.getAgentsInChannel = async () => [
+        {
+          id: "U01",
+          name: "search-agent",
+          real_name: "Search Agent",
+          bot_id: "U01",
+        },
+      ];
       const mockInput = {
         channel: "test",
         content:
           "We will be traveling to Portland, OR this week.   Are there any events happening related to art or food this week?",
       };
 
-      const response = await agent.generateResponse(mockInput);
+      await agent.generateResponse(mockInput);
 
       expect(inviteToChannel).not.toHaveBeenCalled();
       expect(sendMessage).toHaveBeenCalled();
